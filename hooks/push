@@ -7,6 +7,8 @@ SOURCE_COMMIT=${SOURCE_COMMIT:-$(git log --no-decorate|grep '^commit'|head -n 1|
 GH_API=https://api.github.com/
 GH_PROJECT=cern-fts/davix
 
+MINVER=${MINVER:-0.7.2}
+
 # shellcheck disable=SC1091
 . "$(dirname "$0")/reg-tags/image_tags.sh"
 
@@ -23,10 +25,12 @@ gh_tags() {
 
 for rtag in $(gh_tags); do
   tag=$(printf %s\\n "$rtag" | sed -e 's/R_//' -e 's/_/\./g')
-  if docker image inspect "${DOCKER_REPO}:$tag" >/dev/null 2>&1; then
-    echo "============== Pushing ${DOCKER_REPO}:$tag"
-    docker push "${DOCKER_REPO}:$tag"
-  else
-    echo "!!!!!!!!!!!!!! ${DOCKER_REPO}:$tag was not built, cannot push!"
+  if [ "$(img_version "$tag")" -ge "$(img_version "$MINVER")" ]; then
+    if docker image inspect "${DOCKER_REPO}:$tag" >/dev/null 2>&1; then
+      echo "============== Pushing ${DOCKER_REPO}:$tag"
+      docker push "${DOCKER_REPO}:$tag"
+    else
+      echo "!!!!!!!!!!!!!! ${DOCKER_REPO}:$tag was not built, cannot push!"
+    fi
   fi
 done
