@@ -29,7 +29,8 @@ RUN apt-get -y update \
   && cd "/tmp/davix-${DAVIX_VERSION#v}/build" \
   && cmake -Wno-dev -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_BUILD_WITH_INSTALL_RPATH=1 .. \
   && make \
-  && make install
+  && make install \
+  && cp ../docker/davix.sh /usr/local/bin/
 
 
 
@@ -50,7 +51,7 @@ LABEL org.opencontainers.image.source="https://github.com/efrecon/docker-davix/D
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-COPY --from=base /usr/local/bin/davix-* /usr/local/bin/
+COPY --from=base /usr/local/bin/davix* /usr/local/bin/
 COPY --from=base /usr/local/lib64/libdavix.so /usr/local/lib/x86_64-linux-gnu/
 RUN apt-get -y update \
   && apt-get --no-install-recommends -y install ca-certificates wget libxml2 openssl uuid \
@@ -68,3 +69,5 @@ RUN apt-get -y update \
   && ln -sf libdavix.so "libdavix.so.${DAVIX_VERSION#v}" \
   && ln -sf libdavix.so "libdavix.so.$(printf %s\\n "${DAVIX_VERSION#v}" | cut -d. -f1)" \
   && ldconfig 
+
+ENTRYPOINT [ "/usr/local/bin/davix.sh" ]
